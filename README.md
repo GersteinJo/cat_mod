@@ -1,0 +1,1 @@
+This is the library for categorization models based on Turner's Adaprive Representation model it includes the stated model itself and probable modifications
