@@ -70,11 +70,16 @@ class SEP:
             predictions :  predictions.shape[0] = s.shape[0],
                 predictions.shape[1] = self.output_space_shape
         '''
-        total_K = np.sum(
-            + np.repeat(self.X.reshape(-1,self.X.shape[0],self.X.shape[1]), s.shape[0], axis = 0)
-            - np.repeat(s.reshape(s.shape[0], -1, s.shape[1]), self.X.shape[0], axis = 1)
-            , axis=-1).T # this one is just messed up, but i need to think how to transfer this
-                         # to fitting method so it does not last forever
-
-        predictions = np.matmul(self.P.T, total_K).T
+        total_K = np.zeros((0, self.X.shape[0]))
+        for t in range(s.shape[0]):
+            K = self.kernel_func(self.X, s[t], *args)
+            total_K = np.concatenate((total_K, K.reshape(1, K.shape[0])))
+        # total_K = np.sum(
+        #     + np.repeat(self.X.reshape(-1,self.X.shape[0],self.X.shape[1]), s.shape[0], axis = 0)
+        #     - np.repeat(s.reshape(s.shape[0], -1, s.shape[1]), self.X.shape[0], axis = 1)
+        #     , axis=-1).T # this one is just messed up, but i need to think how to transfer this
+        #                  # to fitting method so it does not last forever
+        # print(self.P.shape, total_K.shape, s.shape)
+        
+        predictions = np.matmul(total_K,self.P)
         return predictions
