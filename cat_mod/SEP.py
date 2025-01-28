@@ -1,4 +1,5 @@
 import numpy as np
+import scipy as sp
 
 class SEP:
 
@@ -75,6 +76,10 @@ class SEP:
         Returns:
             self
         '''
+        if len(f.shape) == 1:
+            original_f = f.copy()
+            f = np.zeros((f.shape[0], np.unique(f).shape[0]))
+            f[np.arange(f.shape[0]),original_f] = 1
 
         if kernel is None:
             kernel = 'exponential'
@@ -98,7 +103,7 @@ class SEP:
 
         return self
 
-    def predict(self, s, *args):
+    def predict_proba(self, s, *args):
         '''
         This one is also messed up af; oh, scandinavian Gods, spare me this doom
         Args:
@@ -118,5 +123,9 @@ class SEP:
         #                  # to fitting method so it does not last forever
         # print(self.P.shape, total_K.shape, s.shape)
 
-        predictions = np.matmul(total_K,self.P)
+        predictions = sp.special.softmax(np.matmul(total_K,self.P), axis = 1)
         return predictions
+
+    def predict(self, s, *args):
+        predictions = self.predict_proba(s, *args)
+        return(np.argmax(predictions, axis = 1))

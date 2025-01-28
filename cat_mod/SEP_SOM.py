@@ -2,6 +2,7 @@ import numpy as np
 from minisom import MiniSom
 from time import time
 import types
+import scipy as sp
 
 class SEP_SOM:
 
@@ -82,6 +83,7 @@ class SEP_SOM:
         Black magic happens here which I'm hoping I remember tomorrow
         Args:
             s (np.array) : set of stimuli (s.shape[0] -- numbers of datapoints)
+            f (np.array) : category of a stimulus
             kernel (string or function in form
                 def func(X, s, **args) where X -- exemplars, *args -- additional arguements) : kernel function
                 default 'exponential'
@@ -92,6 +94,12 @@ class SEP_SOM:
         Returns:
             self
         '''
+        if len(f.shape) == 1:
+            original_f = f.copy()
+            f = np.zeros((f.shape[0], np.unique(f).shape[0]))
+            f[np.arange(f.shape[0]),original_f] = 1
+
+
         if seed is None:
             seed = int(time())
 
@@ -169,7 +177,7 @@ class SEP_SOM:
 
         return self
 
-    def predict(self, s, *args):
+    def predict_proba(self, s, *args):
         '''
         This one is also messed up af; oh, scandinavian Gods, spare me this doom
         Args:
@@ -189,5 +197,9 @@ class SEP_SOM:
         #                  # to fitting method so it does not last forever
         # print(self.P.shape, total_K.shape, s.shape)
 
-        predictions = np.matmul(total_K,self.P)
+        predictions = sp.special.softmax(np.matmul(total_K,self.P), axis = 1)
         return predictions
+    
+    def predict(self, s, *args):
+        predictions = self.predict_proba(s, *args)
+        return(np.argmax(predictions, axis = 1))
