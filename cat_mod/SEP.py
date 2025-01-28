@@ -1,6 +1,24 @@
 import numpy as np
 
 class SEP:
+
+
+    def __exponential_kernel__(self, X, s, *args):
+        '''
+        X (np.array) : exemplar space
+        s (np.array) : a stimulus
+        *args : additional arguments for the kernel (NOT IMPLEMENTED YET)
+        '''
+        return np.exp(-self.delta*np.linalg.norm(X - s, axis = 1))
+
+    def __gaussian_kernel__(self, X, s, *args):
+        '''
+        X (np.array) : exemplar space
+        s (np.array) : a stimulus
+        *args : additional arguments for the kernel (NOT IMPLEMENTED YET)
+        '''
+        return np.exp(-self.delta*np.power(np.linalg.norm(X - s, axis = 1), 2))
+
     def __init__(self, hidden_space_shape, output_space_shape,
                  delta = 1, lr = 0.9, omega = 1, dr = 0.1,
                  X = None):
@@ -42,9 +60,14 @@ class SEP:
         self.dr = dr
         self.X = X
 
+        kernels = {}
+        kernels['exponential'] = self.__exponential_kernel__
+        kernels['gaussian'] = self.__gaussian_kernel__
+        self.kernels = kernels
+
         self.P = np.zeros((hidden_space_shape, output_space_shape ))
 
-    def fit(self, s, f = None):
+    def fit(self, s, f = None, kernel = None, *args):
         '''
         Black magic happens here which I'm hoping I remember tomorrow
         Args:
@@ -52,8 +75,22 @@ class SEP:
         Returns:
             self
         '''
+
+        if kernel is None:
+            kernel = 'exponential'
+
+        if kernel in self.kernels.keys():
+            kernel_func = self.kernels[kernel]
+        elif isinstance(kernel, types.FunctionType):
+            kernel_func = kernel
+        else:
+            print("kernel should be in the following list: ", self.kernels.keys(), ", or be a callable function")
+            return
+
+        self.kernel_func = kernel_func
+
         for t in range(s.shape[0]):
-            K = np.exp(-self.delta*np.linalg.norm(self.X - s[t], axis = 1)) #array of shape (X.shape[0],)
+            K = kernel_func(self.X, s[t], *args)
             a = np.repeat(K, self.output_space_shape).reshape(K.shape[0], -1)
             b = np.repeat(f[t].reshape(-1, f[t].shape[0]), self.hidden_space_shape, axis = 0).reshape(-1, f[t].shape[0])
             self.P = self.dr * self.P + self.lr*a*(b-self.omega * self.P)
@@ -61,7 +98,7 @@ class SEP:
 
         return self
 
-    def predict(self, s):
+    def predict(self, s, *args):
         '''
         This one is also messed up af; oh, scandinavian Gods, spare me this doom
         Args:
@@ -80,6 +117,6 @@ class SEP:
         #     , axis=-1).T # this one is just messed up, but i need to think how to transfer this
         #                  # to fitting method so it does not last forever
         # print(self.P.shape, total_K.shape, s.shape)
-        
+
         predictions = np.matmul(total_K,self.P)
         return predictions

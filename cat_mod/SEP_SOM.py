@@ -188,6 +188,6 @@ class SEP_SOM:
         #     , axis=-1).T # this one is just messed up, but i need to think how to transfer this
         #                  # to fitting method so it does not last forever
         # print(self.P.shape, total_K.shape, s.shape)
-        
+
         predictions = np.matmul(total_K,self.P)
         return predictions
