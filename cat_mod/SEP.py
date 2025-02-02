@@ -100,11 +100,13 @@ class SEP:
             K = kernel_func(self.X, s[t], *args)
             a = np.repeat(K, self.output_space_shape).reshape(K.shape[0], -1)
             b = np.repeat(f[t].reshape(-1, f[t].shape[0]), self.hidden_space_shape, axis = 0).reshape(-1, f[t].shape[0])
-            self.P = self.dr * self.P + self.lr*a*(b-self.omega * self.P)
             acc = int(np.argmax(np.matmul(K,self.P)) == np.argmax(f[t]))
             # print(t)
             # print(np.argmax(np.matmul(K,self.P)), f[t], end = " \t")
             # print(acc)
+            self.P = self.dr * self.P + self.lr*a*(b-self.omega * self.P)
+            
+            
             if self.logger:
                 self.logger.log(
                     {"pred_correct": acc},
