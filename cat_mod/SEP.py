@@ -22,7 +22,7 @@ class SEP:
 
     def __init__(self, hidden_space_shape, output_space_shape,
                  delta = 1, lr = 0.9, omega = 1, dr = 0.1,
-                 X = None):
+                 X = None, logger = None):
         '''
         Practically, this classdoes the following:
         instead of training the hidden space transition we use matrix X (matrix
@@ -68,6 +68,8 @@ class SEP:
 
         self.P = np.zeros((hidden_space_shape, output_space_shape ))
 
+        self.logger = logger
+
     def fit(self, s, f = None, kernel = None, *args):
         '''
         Black magic happens here which I'm hoping I remember tomorrow
@@ -99,6 +101,14 @@ class SEP:
             a = np.repeat(K, self.output_space_shape).reshape(K.shape[0], -1)
             b = np.repeat(f[t].reshape(-1, f[t].shape[0]), self.hidden_space_shape, axis = 0).reshape(-1, f[t].shape[0])
             self.P = self.dr * self.P + self.lr*a*(b-self.omega * self.P)
+            acc = int(np.argmax(np.matmul(K,self.P)) == np.argmax(f[t]))
+            # print(t)
+            # print(np.argmax(np.matmul(K,self.P)), f[t], end = " \t")
+            # print(acc)
+            if self.logger:
+                self.logger.log(
+                    {"pred_correct": acc}
+                )
 
 
         return self

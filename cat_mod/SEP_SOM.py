@@ -24,7 +24,7 @@ class SEP_SOM:
 
     def __init__(self, hidden_space_shape, output_space_shape,
                  delta = 1, lr = 0.9, omega = 1, dr = 0.1,
-                 X = None, seed = None):
+                 X = None, seed = None, logger = None):
         '''
         Practically, this class does the following:
         instead of training the hidden space transition we use matrix X (matrix
@@ -74,6 +74,7 @@ class SEP_SOM:
 
         self.P = np.zeros((hidden_space_shape, output_space_shape ))
         # self.P = np.ones((hidden_space_shape, output_space_shape ))/output_space_shape
+        self.logger = logger
 
 
 
@@ -142,6 +143,14 @@ class SEP_SOM:
                 a = np.repeat(K, self.output_space_shape).reshape(K.shape[0], -1)
                 b = np.repeat(f[t].reshape(-1, f[t].shape[0]), self.hidden_space_shape, axis = 0).reshape(-1, f[t].shape[0])
                 self.P = self.dr * self.P + self.lr*a*(b-self.omega * self.P)
+                acc = int(np.argmax(np.matmul(K,self.P)) == np.argmax(f[t]))
+                # print(t)
+                # print(np.matmul(K,self.P), f[t], end = " \t")
+                # print(acc)
+                if self.logger:
+                    self.logger.log(
+                        {"pred_correct": acc}
+                    )
         else:
             # this part seems not only rather excessive it might also have conversion issues as well as it seems to be unpredictable
             # I believe, a better alternative would be having a selected set of samples that would be a plain grid in the feature space
@@ -173,6 +182,14 @@ class SEP_SOM:
                 a = np.repeat(K, self.output_space_shape).reshape(K.shape[0], -1)
                 b = np.repeat(f[t].reshape(-1, f[t].shape[0]), self.hidden_space_shape, axis = 0).reshape(-1, f[t].shape[0])
                 self.P = self.dr * self.P + self.lr*a*(b-self.omega * self.P)
+                acc = int(np.argmax(np.matmul(K,self.P)) == np.argmax(f[t]))
+                # print(t)
+                # print(np.matmul(K,self.P), f[t], end = " \t")
+                # print(acc)
+                if self.logger:
+                    self.logger.log(
+                        {"pred_correct": acc}
+                    )
 
 
         return self
@@ -199,7 +216,7 @@ class SEP_SOM:
 
         predictions = sp.special.softmax(np.matmul(total_K,self.P), axis = 1)
         return predictions
-    
+
     def predict(self, s, *args):
         predictions = self.predict_proba(s, *args)
         return(np.argmax(predictions, axis = 1))
