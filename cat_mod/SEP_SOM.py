@@ -149,7 +149,8 @@ class SEP_SOM:
                 # print(acc)
                 if self.logger:
                     self.logger.log(
-                        {"pred_correct": acc}
+                        {"pred_correct": acc},
+                        step = t
                     )
         else:
             # this part seems not only rather excessive it might also have conversion issues as well as it seems to be unpredictable
@@ -188,7 +189,8 @@ class SEP_SOM:
                 # print(acc)
                 if self.logger:
                     self.logger.log(
-                        {"pred_correct": acc}
+                        {"pred_correct": acc}, 
+                        step = t
                     )
 
 

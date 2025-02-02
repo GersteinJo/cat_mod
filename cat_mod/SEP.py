@@ -107,7 +107,8 @@ class SEP:
             # print(acc)
             if self.logger:
                 self.logger.log(
-                    {"pred_correct": acc}
+                    {"pred_correct": acc},
+                    step = t
                 )
 
 
