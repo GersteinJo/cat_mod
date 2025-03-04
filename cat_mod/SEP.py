@@ -2,8 +2,6 @@ import numpy as np
 import scipy as sp
 
 class SEP:
-
-
     def __exponential_kernel__(self, X, s, *args):
         '''
         X (np.array) : exemplar space
@@ -20,7 +18,7 @@ class SEP:
         '''
         return np.exp(-self.delta*np.power(np.linalg.norm(X - s, axis = 1), 2))
 
-    def __init__(self, hidden_space_shape, output_space_shape,
+    def __init__(self, hidden_space_shape, output_space_shape, input_space_shape = None,
                  delta = 1, lr = 0.9, omega = 1, dr = 0.1,
                  X = None, logger = None):
         '''
@@ -53,13 +51,20 @@ class SEP:
         Returns:
             None
         '''
+        self.input_space_shape = input_space_shape
         self.hidden_space_shape = hidden_space_shape
         self.output_space_shape = output_space_shape
         self.delta = delta
         self.lr = lr
         self.omega = omega
         self.dr = dr
-        self.X = X
+        if X:    
+            self.X = X
+            self.counter = None
+        else:
+            assert self.input_space_shape is not None, "you need to explicitly state the input space dimentionality if you do not provide examples"
+            self.X = np.zeros((hidden_space_shape, input_space_shape))
+            self.counter = 0
 
         kernels = {}
         kernels['exponential'] = self.__exponential_kernel__
@@ -97,6 +102,11 @@ class SEP:
         self.kernel_func = kernel_func
 
         for t in range(s.shape[0]):
+            if self.counter is not None:
+                if self.counter < self.hidden_space_shape:
+                    self.X[self.counter] = s[t]
+                    self.counter += 1
+
             K = kernel_func(self.X, s[t], *args)
             a = np.repeat(K, self.output_space_shape).reshape(K.shape[0], -1)
             b = np.repeat(f[t].reshape(-1, f[t].shape[0]), self.hidden_space_shape, axis = 0).reshape(-1, f[t].shape[0])
