@@ -70,7 +70,8 @@ class SEP:
         kernels['exponential'] = self.__exponential_kernel__
         kernels['gaussian'] = self.__gaussian_kernel__
         self.kernels = kernels
-
+        self.kernel_func = self.__exponential_kernel__
+        
         self.P = np.zeros((hidden_space_shape, output_space_shape ))
 
         self.logger = logger

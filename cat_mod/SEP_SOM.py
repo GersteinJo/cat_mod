@@ -66,6 +66,7 @@ class SEP_SOM:
         kernels['exponential'] = self.__exponential_kernel__
         kernels['gaussian'] = self.__gaussian_kernel__
         self.kernels = kernels
+        self.kernel_func = self.__exponential_kernel__
 
         self.som = None
 
