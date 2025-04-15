@@ -86,7 +86,8 @@ class SEP:
         '''
         if len(f.shape) == 1:
             original_f = f.copy()
-            f = np.zeros((f.shape[0], np.unique(f).shape[0]))
+#            f = np.zeros((f.shape[0], np.unique(f).shape[0]))
+            f = np.zeros((f.shape[0], self.output_space_shape))
             f[np.arange(f.shape[0]),original_f] = 1
 
         if kernel is None:
