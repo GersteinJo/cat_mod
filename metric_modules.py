@@ -34,7 +34,7 @@ def train_classifier(config, peck_obs_num = 1000, n_iter = 10000, encoded_data=N
             sep.fit(obs, label)
 
 
-def encode_dataset(encoder, dataloader, device='cpu'):
+def encode_dataset(encoder, dataloader, orig_loader, device='cpu'):
     """
     Encodes images and labels using the provided encoder (e.g., a CNN or transformer).
     
@@ -46,26 +46,30 @@ def encode_dataset(encoder, dataloader, device='cpu'):
     Returns:
         Tuple of (encoded_features_numpy, labels_numpy)
     """
-    all_features = []
-    all_labels = []
+    embeddings = []
+    labels = []
+    original_images = []
 
     with torch.no_grad():
-        for images, labels in dataloader:
-            images = images.to(device)
-            labels = labels.to('cpu').numpy()
+        for images, targets in dataloader:
+            images = images.to(device, non_blocking=True)
+            embeddings.append(encoder(images).cpu())
+            labels.append(targets)
 
-            # Forward pass through the encoder
-            features = encoder(images)  # output shape: (batch_size, feature_dim)
-            # Move features to CPU and convert to NumPy
-            features = features.detach().cpu().numpy()
+        embeddings = torch.cat(embeddings)  # Shape: [10000, 384]
+        labels = torch.cat(labels)  # Shape: [10000]
 
-            all_features.append(features)
-            all_labels.append(labels)
+        # Extract original images (32x32, no padding/normalization)
+        for images, _ in orig_loader:
+            original_images.append(images)
 
-    features_np = np.concatenate(all_features, axis=0)
-    labels_np = np.concatenate(all_labels, axis=0)
+        original_images = torch.cat(original_images)
+        
+    return (embeddings.detach().cpu().numpy(), 
+            labels.detach().cpu().numpy(), 
+            original_images.detach().cpu().numpy().reshape(original_images.shape[0], -1))
 
-    return features_np, labels_np
+    
 
 def compare_embeddings(emb1, emb2):
     dissim1 = 1. - np.corrcoef(emb1)
