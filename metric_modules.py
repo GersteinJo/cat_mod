@@ -46,28 +46,26 @@ def encode_dataset(encoder, dataloader, orig_loader, device='cpu'):
     Returns:
         Tuple of (encoded_features_numpy, labels_numpy)
     """
-    embeddings = []
-    labels = []
-    original_images = []
+    all_embeddings = []
+    all_labels = []
+    all_original_images = []
 
     with torch.no_grad():
-        for images, targets in dataloader:
-            images = images.to(device, non_blocking=True)
-            embeddings.append(encoder(images).cpu())
-            labels.append(targets)
+        for (images_dino, targets), (images_orig, _) in zip(loader, original_loader):
+            images_dino = images_dino.to(device, non_blocking=True)
+            embeddings = encoder_function(images_dino).cpu()
+            all_embeddings.append(embeddings)
+            all_labels.append(targets)
+            all_original_images.append(images_orig)
 
-        embeddings = torch.cat(embeddings)  # Shape: [10000, 384]
-        labels = torch.cat(labels)  # Shape: [10000]
+    embeddings = torch.cat(all_embeddings)  # [N, D]
+    labels = torch.cat(all_labels)
+    original_images = torch.cat(all_original_images)
+    original_images = original_images.reshape(original_images.shape[0], -1)
 
-        # Extract original images (32x32, no padding/normalization)
-        for images, _ in orig_loader:
-            original_images.append(images)
-
-        original_images = torch.cat(original_images)
-        
-    return (embeddings.detach().cpu().numpy(), 
-            labels.detach().cpu().numpy(), 
-            original_images.detach().cpu().numpy().reshape(original_images.shape[0], -1))
+    return (embeddings.numpy(),
+            labels.numpy(),
+            original_images.numpy())
 
     
 
