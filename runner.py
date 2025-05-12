@@ -1,31 +1,38 @@
 import yaml
-from metric_modules import encode_dataset, train_classifier, compare_embeddings
+import wandb
 
 class Runner:
-    def __init__(self, 
-                 config_path,
+    def __init__(self,
                  encoder_function,
                  loader,
                  original_loader, # in case encoder needs somewhat modified version of original image to proceed
-                 cat_mod,
+                 config_path = None,
                 ):
-        with open(config_path, 'r') as file:
-            self.config = yaml.safe_load(file)
+        if config_path:
+            with open(config_path, 'r') as file:
+                self.config = yaml.safe_load(file)
+                print(self.config)
+        else:
+            self.config = None
         self.encoder_function = encoder_function
         self.loader = loader
         self.original_loader = original_loader
-        self.cat_mod = cat_mod
-    
-    def run():
-        embeddings, labels, original_images = encode_dataset(self.encoder_function, self.loader, self.original_loader)
-        
-        run_name = f'encoder_{config["encoder"]}_kernel_{config["kernel"]}_num_exemplars_{config["num_exemp"]}'
-        logger = wandb.init(project = 'encoder_runs', config = config, name = run_name,
-            tags = [config['model_name'], config['encoder'], config['kernel'], f"num_exemp_{config['num_exemp']}"])
-        train_classifier(config, encoded_data=embeddings, labels=labels, logger = logger)
-        logger.log({"second_order_similarity" : compare_embeddings(embeddings, original_images)})
-        logger.finish()
-        
-        
-        
-            
+
+    def run(self, run_name = None, device = "cpu", n_iter = 1, embeddings=None, labels=None, original_images=None):
+        if embeddings is None or labels is None or original_images is None:
+            embeddings, labels, original_images = encode_dataset(self.encoder_function, self.loader, self.original_loader, device)
+
+        for _ in range(n_iter):
+            permutation = np.arange(len(labels))
+            np.random.shuffle(permutation)
+            if run_name is None : run_name = f'encoder_{self.config["encoder"]}_kernel_{self.config["kernel"]}_num_exemplars_{self.config["num_exemp"]}'
+            logger = wandb.init(project = 'encoder_runs', config = self.config, name = run_name,
+                tags = [self.config['model_name'], self.config['encoder'], self.config['kernel'], f"num_exemp_{self.config['num_exemp']}"]) if self.config else None
+
+            train_classifier(self.config, encoded_data=embeddings[permutation], labels=labels[permutation], logger = logger)
+
+            logger.log({"second_order_similarity" : compare_embeddings(embeddings[permutation[:10000]], original_images[permutation[:10000]])})
+
+            logger.finish()
+
+        return embeddings, labels, original_images
