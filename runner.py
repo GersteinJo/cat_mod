@@ -1,5 +1,10 @@
 import yaml
 import wandb
+from metric_modules import train_classifier, encode_dataset, compare_embeddings, embedding_plotter
+
+import pandas as pd
+import numpy as np
+from sklearn.manifold import TSNE
 
 class Runner:
     def __init__(self,
@@ -35,4 +40,26 @@ class Runner:
 
             logger.finish()
 
-        return embeddings, labels, original_images
+        tsne = TSNE(n_components=2, random_state=1,
+                    init='pca', n_iter=5000,
+                    metric='euclidean')
+
+        # Fit and transform your data
+        tsne_results = tsne.fit_transform(embeddings[:1000])
+
+        # Prepare the data DataFrame correctly
+        data_df = pd.DataFrame({
+            'label': np.array(labels[:1000])  # Assuming you have labels
+            # Add any other columns you want for hover information
+        })
+
+        data_df['tsne_x'] = tsne_results[:,0]
+        data_df['tsne_y'] = tsne_results[:,1]
+        # Call the plotting function correctly
+        embedding_plotter(
+            embedding=tsne_results,  # This should be your 2D t-SNE results (1000x2 array)
+            data=data_df,            # This contains your labels and other metadata
+            hue='label',             # Column name in data_df to use for coloring
+        )
+
+        return embeddings, labels, original_images, data_df
