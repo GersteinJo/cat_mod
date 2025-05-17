@@ -8,3 +8,9 @@ torch
 torchvision
 numba
 seaborn
+PyYAML
+wandb
+scikit-learn
+tqdm
+bokeh
+plotly

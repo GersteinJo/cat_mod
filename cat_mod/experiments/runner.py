@@ -1,6 +1,6 @@
 import yaml
 import wandb
-from metric_modules import train_classifier, encode_dataset, compare_embeddings, embedding_plotter
+from cat_mod.utils.metric_modules import train_classifier, encode_dataset, compare_embeddings, embedding_plotter
 
 import pandas as pd
 import numpy as np

@@ -1,10 +1,6 @@
-from pathlib import Path
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch import nn as nn
-
 
 class Encoder(nn.Module):
     def __init__(self):
@@ -89,33 +85,6 @@ class Classifier(nn.Module):
         clazz = F.relu(self.bn2(self.l2(clazz)))
         clazz = F.softmax(self.bn3(self.l3(clazz)), dim=1)
         return clazz
-
-
-# class DeepInfoAsLatent(nn.Module):
-#     def __init__(self, run, epoch):
-#         super().__init__()
-#         model_path = Path(r'/content') / Path(str(run)) / Path('encoder' + str(epoch) + '.wgt')
-#         self.encoder = Encoder()
-#         self.encoder.load_state_dict(torch.load(str(model_path)))
-#         self.classifier = Classifier()
-
-#     def forward(self, x):
-#         z, features = self.encoder(x)
-#         z = z.detach()
-#         return self.classifier((z, features))
-
-
-import torch
-from torchvision.datasets.cifar import CIFAR10
-from torch.utils.data import DataLoader
-from torchvision.transforms import ToTensor
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.optim import Adam
-from tqdm import tqdm
-from pathlib import Path
-import statistics as stats
-import argparse
 
 
 class DeepInfoMaxLoss(nn.Module):

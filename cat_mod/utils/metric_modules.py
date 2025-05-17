@@ -1,9 +1,9 @@
-from cat_mod import SEP
-from residual.loader import ImageLabelDataset
+from cat_mod.models.cat_mod import SEP
 
 import numpy as np
 import torch
 from scipy.stats import pearsonr
+import pandas as pd
 
 # for plotting 
 from bokeh.plotting import figure, show
@@ -11,7 +11,6 @@ from bokeh.io import output_notebook
 from bokeh.models import ColumnDataSource, ColorBar
 from bokeh.transform import linear_cmap, factor_cmap
 from bokeh.palettes import Viridis256
-from bokeh.layouts import row
 
 import plotly.express as px
 
@@ -48,7 +47,7 @@ def train_classifier(config, peck_obs_num = 200, n_iter = 10000, encoded_data=No
             sep.fit(obs, label)
 
 
-def encode_dataset(encoder, dataloader, orig_loader, device='cpu'):
+def encode_dataset(encoder, loader, original_loader, device='cpu'):
     """
     Encodes images and labels using the provided encoder (e.g., a CNN or transformer).
     
@@ -67,7 +66,7 @@ def encode_dataset(encoder, dataloader, orig_loader, device='cpu'):
     with torch.no_grad():
         for (images_dino, targets), (images_orig, _) in zip(loader, original_loader):
             images_dino = images_dino.to(device, non_blocking=True)
-            embeddings = encoder_function(images_dino).cpu()
+            embeddings = encoder(images_dino).cpu()
             all_embeddings.append(embeddings)
             all_labels.append(targets)
             all_original_images.append(images_orig)
