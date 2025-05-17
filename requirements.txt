@@ -1,3 +1,10 @@
 numpy
 minisom
 scipy
+pandas
+matplotlib
+pillow
+torch
+torchvision
+numba
+seaborn
