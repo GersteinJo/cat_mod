@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 from numpy import typing as npt
 
-from hima.common.sdr import RateSdr, AnySparseSdr
+from cat_mod.models.representations.spatial_pooler.sdr import RateSdr, AnySparseSdr
 
 
 class SdrArray:

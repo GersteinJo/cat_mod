@@ -26,7 +26,6 @@ from cat_mod.models.representations.spatial_pooler.se_utils import (
     boosting, arg_top_k, normalize, FilterInputPolicy, BoostingPolicy, LearningPolicy,
     ActivationPolicy, BackendType
 )
-from cat_mod.models.representations.spatial_pooler.synaptogenesis_controller import SynaptogenesisController
 from cat_mod.models.representations.spatial_pooler.utils import abs_or_relative
 
 if TYPE_CHECKING:
@@ -136,8 +135,6 @@ class SpatialEncoderLayer:
         print_backend_info(self.weights_backend)
 
         self.synaptogenesis_controller = None
-        if synaptogenesis is not None:
-            self.synaptogenesis_controller = SynaptogenesisController(owner=self, **synaptogenesis)
 
         # ==> Pattern matching
         self.boosting_policy = BoostingPolicy[boosting_policy.upper()]

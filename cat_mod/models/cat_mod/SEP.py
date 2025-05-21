@@ -1,5 +1,7 @@
 import numpy as np
 import scipy as sp
+import types
+
 
 class SEP:
     def __exponential_kernel__(self, X, s, *args):
@@ -66,7 +68,7 @@ class SEP:
             self.X = np.zeros((hidden_space_shape, input_space_shape))
             self.counter = 0
 
-        kernels = {}
+        kernels = dict()
         kernels['exponential'] = self.__exponential_kernel__
         kernels['gaussian'] = self.__gaussian_kernel__
         self.kernels = kernels
@@ -153,4 +155,4 @@ class SEP:
 
     def predict(self, s, *args):
         predictions = self.predict_proba(s, *args)
-        return(np.argmax(predictions, axis = 1))
+        return np.argmax(predictions, axis = 1)
