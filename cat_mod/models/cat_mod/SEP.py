@@ -20,9 +20,19 @@ class SEP:
         '''
         return np.exp(-self.delta*np.power(np.linalg.norm(X - s, axis = 1), 2))
 
-    def __init__(self, hidden_space_shape, output_space_shape, input_space_shape = None,
-                 delta = 1, lr = 0.9, omega = 1, dr = 0.1,
-                 X = None, logger = None):
+    def __init__(
+            self,
+            hidden_space_shape,
+            output_space_shape,
+            input_space_shape = None,
+            delta = 1,
+            lr = 0.9,
+            omega = 1,
+            dr = 0.1,
+            kernel=None,
+            X=None,
+            logger = None
+    ):
         '''
         Practically, this classdoes the following:
         instead of training the hidden space transition we use matrix X (matrix
@@ -72,13 +82,25 @@ class SEP:
         kernels['exponential'] = self.__exponential_kernel__
         kernels['gaussian'] = self.__gaussian_kernel__
         self.kernels = kernels
-        self.kernel_func = self.__exponential_kernel__
+
+        if kernel is None:
+            kernel = 'exponential'
+
+        if kernel in self.kernels.keys():
+            kernel_func = self.kernels[kernel]
+        elif isinstance(kernel, types.FunctionType):
+            kernel_func = kernel
+        else:
+            print("kernel should be in the following list: ", self.kernels.keys(), ", or be a callable function")
+            return
+
+        self.kernel_func = kernel_func
         
         self.P = np.zeros((hidden_space_shape, output_space_shape ))
 
         self.logger = logger
 
-    def fit(self, s, f = None, kernel = None, *args):
+    def fit(self, s, f=None, kernel=None, *args):
         '''
         Black magic happens here which I'm hoping I remember tomorrow
         Args:

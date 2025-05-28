@@ -1,46 +1,94 @@
-from runner import Runner
-from cat_mod.models.representations.DIM import Encoder
-from cat_mod.utils.image_dataset import ImageLabelDataset
-from pathlib import Path
-
-import pandas as pd
+import yaml
+import wandb
 import numpy as np
-
-import torch
 from torchvision import transforms
 from torch.utils.data import DataLoader
 
-if __name__ == '__main__':
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+from runner import Runner
+from cat_mod.utils.image_dataset import ImageLabelDataset
+from cat_mod.models.representations.wrappers import DIM
+from cat_mod.models.representations.CNNEncoder import CNNEncoder
+from cat_mod.models.representations.ConvVAE import ConvVAE as VAEncoder
+from cat_mod.models.representations.spatial_pooler.se import SpatialEncoderLayer as SPEncoder
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+ENCODERS = {
+    "dim": DIM,
+    "cnn": CNNEncoder,
+    "vae": VAEncoder,
+    "se": SPEncoder
+}
 
-    encoder = Encoder().to(device)
-    root = Path(r'path/to/DIM/weights/')
-    enc_file = root / Path('cifar_pretrained150.wgt')
-    encoder.load_state_dict(torch.load(str(enc_file), map_location = device))
+from cat_mod.models.cat_mod.SEP import SEP
+from cat_mod.models.cat_mod.SEP_SOM import SEP_SOM
 
-    pd.read_csv('image_info.csv')['edible'].astype(int).to_csv("test_is_edible.csv")
+CATS = {
+    "sep": SEP,
+    "sep_som": SEP_SOM
+}
+
+def read_config(path):
+    with open(path, 'r') as file:
+        conf = yaml.load(file, yaml.Loader)
+    return conf
+
+def setup_encoder(cfg_path):
+    cfg = read_config(cfg_path)
+    type_ = cfg_path.split('/')[-2]
+    enc = ENCODERS[type_](**cfg)
+    return enc, type_, cfg
+
+def setup_categoriser(cfg_path):
+    cfg = read_config(cfg_path)
+    type_ = cfg_path.split('/')[-2]
+    enc = CATS[type_](**cfg)
+    return enc, type_, cfg
+
+
+def setup_dataset(conf):
     dataset = ImageLabelDataset(
-        csv_file="/path/to/test_is_edible.csv",
-        img_dir="/path/to/image/dir",
+        csv_file=conf['info'],
+        img_dir=conf['dir'],
         transform=transforms.ToTensor()  # Add any other transforms
     )
-    loader = DataLoader(dataset, batch_size=512)
-    loader_original = DataLoader(dataset, batch_size=512)
+    return dataset
 
-    #encoder_func SPECIFICALLY returns only encoded elements!
-    encoder_func = lambda x: encoder(x)[0]
+
+if __name__ == '__main__':
+    # read config
+    conf_path = 'configs/example_config.yaml'
+    conf = read_config(conf_path)
+    seed = conf.get('seed', None)
+    if seed is None:
+        seed = np.random.randint(0, np.iinfo(np.int32).max)
+        conf['seed'] = seed
+
+    # determine encoder and categoriser
+    encoder, enc_type, enc_conf = setup_encoder(conf['encoder_conf'])
+    enc_conf['seed'] = seed
+    conf['encoder_type'] = enc_type
+    conf['encoder_conf'] = enc_conf
+    categoriser, cat_type, cat_conf = setup_categoriser(conf['categoriser_conf'])
+    cat_conf['seed'] = seed
+    conf['categoriser_type'] = enc_type
+    conf['categoriser_conf'] = enc_conf
+
+    conf['dataset']['seed'] = seed
+    dataset = setup_dataset(conf['dataset'])
+
+    log = conf.pop('log')
+    if log:
+        logger = wandb.init(
+            project=conf.pop('project_name'),
+            name=conf.pop('run_name'),
+            config=conf,
+            tags=[conf['categoriser_type'], conf['encoder_type']]
+        )
+    else:
+        logger = None
 
     runner = Runner(
-        encoder_func,
-        loader,
-        loader_original,
-        "/path/to/example_config.yaml"
+        encoder=encoder,
+        categoriser=categoriser,
+        dataset=dataset,
     )
-
-    embeddings, labels, original_images = runner.run("test_rerunning", device, n_iter = 30)
-    ################################################################################################ 64 -- dimentionality of embedding space
-    df = pd.DataFrame(np.hstack([embeddings, original_images]), columns = [f"emb_{i}" for i in range(64)]+[f"or_{i}" for i in range(32*32*3)])
-    df['label'] = labels
-    df.to_csv('/path/to/DIM_embedding.csv')
+    runner.run(conf['n_iter'], logger)

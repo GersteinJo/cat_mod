@@ -1,9 +1,0 @@
-model_name: SEP
-encoder: DIM
-input_space_shape: 64
-delta: 0.1
-lr: 0.001
-dr: 0.999
-omega: 0.3
-kernel: exponential
-num_exemp: 20

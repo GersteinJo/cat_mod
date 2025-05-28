@@ -1,65 +1,65 @@
-import yaml
 import wandb
-from cat_mod.utils.metric_modules import train_classifier, encode_dataset, compare_embeddings, embedding_plotter
-
-import pandas as pd
 import numpy as np
-from sklearn.manifold import TSNE
+
 
 class Runner:
-    def __init__(self,
-                 encoder_function,
-                 loader,
-                 original_loader, # in case encoder needs somewhat modified version of original image to proceed
-                 config_path = None,
-                ):
-        if config_path:
-            with open(config_path, 'r') as file:
-                self.config = yaml.safe_load(file)
-                print(self.config)
-        else:
-            self.config = None
-        self.encoder_function = encoder_function
-        self.loader = loader
-        self.original_loader = original_loader
+    def __init__(
+        self,
+        dataset,
+        categoriser,
+        encoder=None,
+        seed=None
+    ):
+        self.encoder = encoder
+        self.categoriser = categoriser
+        self.dataset = dataset
+        self.seed = seed
+        self._rng = np.random.default_rng(seed)
 
-    def run(self, run_name = None, device = "cpu", n_iter = 1, embeddings=None, labels=None, original_images=None):
-        if embeddings is None or labels is None or original_images is None:
-            embeddings, labels, original_images = encode_dataset(self.encoder_function, self.loader, self.original_loader, device)
-
-        for _ in range(n_iter):
-            permutation = np.arange(len(labels))
-            np.random.shuffle(permutation)
-            if run_name is None : run_name = f'encoder_{self.config["encoder"]}_kernel_{self.config["kernel"]}_num_exemplars_{self.config["num_exemp"]}'
-            logger = wandb.init(project = 'encoder_runs', config = self.config, name = run_name,
-                tags = [self.config['model_name'], self.config['encoder'], self.config['kernel'], f"num_exemp_{self.config['num_exemp']}"]) if self.config else None
-
-            train_classifier(self.config, encoded_data=embeddings[permutation], labels=labels[permutation], logger = logger)
-
-            logger.log({"second_order_similarity" : compare_embeddings(embeddings[permutation[:10000]], original_images[permutation[:10000]])})
-
-            logger.finish()
-
-        tsne = TSNE(n_components=2, random_state=1,
-                    init='pca', n_iter=5000,
-                    metric='euclidean')
-
-        # Fit and transform your data
-        tsne_results = tsne.fit_transform(embeddings[:1000])
-
-        # Prepare the data DataFrame correctly
-        data_df = pd.DataFrame({
-            'label': np.array(labels[:1000])  # Assuming you have labels
-            # Add any other columns you want for hover information
-        })
-
-        data_df['tsne_x'] = tsne_results[:,0]
-        data_df['tsne_y'] = tsne_results[:,1]
-        # Call the plotting function correctly
-        embedding_plotter(
-            embedding=tsne_results,  # This should be your 2D t-SNE results (1000x2 array)
-            data=data_df,            # This contains your labels and other metadata
-            hue='label',             # Column name in data_df to use for coloring
+    def run(self, n_iter, logger=None):
+        peck_counter = 0
+        pecked_objects = wandb.Table(
+            columns=list(self.dataset[0][-1].keys())
         )
+        n_iter = min(n_iter, len(self.dataset))
+        indices = np.arange(len(self.dataset))
+        self._rng.shuffle(indices)
 
-        return embeddings, labels, original_images, data_df
+        total_correct_pecks = 0
+        total_missed = 0
+
+        for i in range(n_iter):
+            obs, label = self.dataset[indices[i]]
+            if self.encoder is not None:
+                obs = self.encoder.encode(obs)
+
+            cls = self.categoriser.predict(obs)
+            is_pecked = cls[0] == 1
+
+            if is_pecked:
+                peck_counter += 1
+                self.categoriser.fit(obs, label)
+
+            correct_peck = int(is_pecked and label['edible'])
+            total_correct_pecks += correct_peck
+            missed = int((not is_pecked) and label['edible'])
+            total_missed += missed
+
+            if logger:
+                logger.log(
+                    {
+                        "peck": int(is_pecked),
+                        "correct_peck": correct_peck,
+                        "missed": missed,
+                        "total_correct_pecks": total_correct_pecks,
+                        "total_missed": total_missed,
+                        "success_rate": total_correct_pecks / (peck_counter + 1e-24),
+                        "total_pecks": peck_counter
+                     },
+                    step=i
+                )
+                pecked_objects.add_data(label.values())
+
+        if logger:
+            logger.log({'pecked_objects': pecked_objects})
+            logger.finish()

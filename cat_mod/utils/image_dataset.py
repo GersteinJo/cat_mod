@@ -1,6 +1,7 @@
 from torch.utils.data import Dataset
 import pandas as pd
 from PIL import Image
+import numpy as np
 
 class ImageLabelDataset(Dataset):
     def __init__(self, csv_file, img_dir, transform=None):
@@ -15,7 +16,7 @@ class ImageLabelDataset(Dataset):
         img_name = self.labels.iloc[idx, 0]  # Assuming first column is image names
         img_path = f"{self.img_dir}/{img_name}.png"
         image = Image.open(img_path).convert('RGB')
-        label = self.labels.iloc[idx, 1]  # Assuming second column is labels
+        label = dict(self.labels.iloc[idx, 1:])  # Assuming second column is labels
 
         if self.transform:
             image = self.transform(image)
