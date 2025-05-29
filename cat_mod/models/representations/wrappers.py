@@ -1,4 +1,8 @@
 from cat_mod.models.representations.DIM import Encoder as DIMEncoder
+from cat_mod.models.representations.spatial_pooler.se import SpatialEncoderLayer
+from cat_mod.models.representations.spatial_pooler.sdr import RateSdr
+from cat_mod.models.representations.spatial_pooler.sds import Sds
+
 import torch
 import numpy as np
 
@@ -9,7 +13,7 @@ class BaseEncoder:
 
 
 class DIM(BaseEncoder):
-    def __init__(self, pretrained_weights_path=None):
+    def __init__(self, pretrained_weights_path=None, **kwargs):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = DIMEncoder().to(self.device)
         if pretrained_weights_path:
@@ -25,3 +29,21 @@ class DIM(BaseEncoder):
             obs = self.model(obs[None])[0][0]
         obs = obs.detach().cpu().numpy()
         return obs
+
+class SE(BaseEncoder):
+    def __init__(self, pretrained_weights=None, **config):
+        encoding_sds = Sds.make(config.pop('encoding_sds'))
+        self.model = SpatialEncoderLayer(feedforward_sds=Sds((32*32*3, 32*32*3)), output_sds=encoding_sds, **config)
+        if pretrained_weights:
+            weights = np.load(pretrained_weights)
+            self.model.weights_backend.weights = weights
+            print('Pretrained weights loaded.')
+
+    def encode(self, obs: torch.Tensor) ->np.ndarray:
+        dense = obs.numpy().flatten()
+        threshold = 1/255.0
+        sparse = np.flatnonzero(dense >= threshold)
+        dense[dense < threshold] = 0.0
+        rate_sdr = RateSdr(sparse, values=dense[sparse])
+        emb = self.model.compute(rate_sdr)
+        return emb.to_dense(self.model.output_sds.size)

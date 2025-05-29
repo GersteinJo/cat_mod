@@ -1,8 +1,9 @@
-log: true
+log: false
 project_name: 'chicken'
 run_name: 'test'
 categoriser_conf: 'configs/categorisers/sep/default.yaml'
-encoder_conf: 'configs/encoders/dim/default.yaml'
+#encoder_conf: 'configs/encoders/dim/default.yaml'
+encoder_conf: 'configs/encoders/se/default.yaml'
 
 n_iter: 500
 seed: null

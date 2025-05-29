@@ -52,6 +52,7 @@ if __name__ == '__main__':
         seed = np.random.randint(0, np.iinfo(np.int32).max)
         conf['seed'] = seed
 
+    conf['se'] = read_config(conf['se_config'])
     conf['se']['seed'] = seed
     conf['dataset']['seed'] = seed
 

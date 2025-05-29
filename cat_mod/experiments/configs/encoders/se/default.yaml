@@ -1,0 +1,56 @@
+pretrained_weights: 'weights/se_cifar.npy'
+ds_norm: lp
+encoding_sds: [2000, 12]
+adapt_to_ff_sparsity: True
+normalize_input_p: 0.0
+# no | subtract_avg | subtract_avg_and_clip
+filter_input_policy: "no"
+
+# weights norm [should be compatible with learning policy, i.e.
+# p = 1 for linear and p > 1 for krotov]
+lebesgue_p: 1.0
+# lebesgue_p: 2.0
+init_radius: 20.0
+weights_distribution: normal
+
+initial_rf_to_input_ratio: 100.0
+initial_max_rf_sparsity: 1.0
+
+# Weights power for matching [should be compatible with learning policy, i.e.
+#   lebesgue_p - 1 for krotov (use ... to make it auto-induced), and
+#   we allow any p for linear policy (however, only p = 1 is the most natural)]
+# ... | <power>
+match_p: null
+# For match_p != 1.0 it's always mul ==> u = Ax
+#   match_p == 1.0: mul or min, which is u = \sum_i pairwise_min(a_i, x)
+match_op: mul
+#    match_op: min
+# no | additive | multiplicative
+boosting_policy: multiplicative
+min_boosting_k: 0.05
+# powerlaw | exponential
+activation_policy: powerlaw
+beta: 1.0
+beta_lr: 0.0
+#    beta_lr: 0.0004
+# abs or relative to K
+soft_extra: 1.0
+# with respect to top K against second top K
+beta_active_mass: [ 0.72, 0.82 ]
+
+normalize_output: False
+output_extra: 10.0
+#    output_extra: 4.0
+
+# linear | krotov
+learning_policy: linear
+#    learning_policy: krotov
+learning_rate: 0.01
+adaptive_lr: True
+lr_range: [ 0.002, 0.1 ]
+# M | [M, Q]: M - hebb, Q - anti-hebb; ints or floats — absolute or relative to K
+learning_set: [ 0.75, 0.75 ]
+anti_hebb_scale: 0.8
+persistent_signs: False
+normalize_dw: False
+print_stats_schedule: 25_000

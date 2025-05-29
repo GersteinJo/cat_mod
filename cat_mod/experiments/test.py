@@ -6,16 +6,15 @@ from torch.utils.data import DataLoader
 
 from runner import Runner
 from cat_mod.utils.image_dataset import ImageLabelDataset
-from cat_mod.models.representations.wrappers import DIM
+from cat_mod.models.representations.wrappers import DIM, SE
 from cat_mod.models.representations.CNNEncoder import CNNEncoder
 from cat_mod.models.representations.ConvVAE import ConvVAE as VAEncoder
-from cat_mod.models.representations.spatial_pooler.se import SpatialEncoderLayer as SPEncoder
 
 ENCODERS = {
     "dim": DIM,
     "cnn": CNNEncoder,
     "vae": VAEncoder,
-    "se": SPEncoder
+    "se": SE
 }
 
 from cat_mod.models.cat_mod.SEP import SEP
@@ -31,14 +30,16 @@ def read_config(path):
         conf = yaml.load(file, yaml.Loader)
     return conf
 
-def setup_encoder(cfg_path):
+def setup_encoder(cfg_path, seed):
     cfg = read_config(cfg_path)
+    cfg['seed'] = seed
     type_ = cfg_path.split('/')[-2]
     enc = ENCODERS[type_](**cfg)
     return enc, type_, cfg
 
-def setup_categoriser(cfg_path):
+def setup_categoriser(cfg_path, seed):
     cfg = read_config(cfg_path)
+    cfg['seed'] = seed
     type_ = cfg_path.split('/')[-2]
     enc = CATS[type_](**cfg)
     return enc, type_, cfg
@@ -63,12 +64,10 @@ if __name__ == '__main__':
         conf['seed'] = seed
 
     # determine encoder and categoriser
-    encoder, enc_type, enc_conf = setup_encoder(conf['encoder_conf'])
-    enc_conf['seed'] = seed
+    encoder, enc_type, enc_conf = setup_encoder(conf['encoder_conf'], seed)
     conf['encoder_type'] = enc_type
     conf['encoder_conf'] = enc_conf
-    categoriser, cat_type, cat_conf = setup_categoriser(conf['categoriser_conf'])
-    cat_conf['seed'] = seed
+    categoriser, cat_type, cat_conf = setup_categoriser(conf['categoriser_conf'], seed)
     conf['categoriser_type'] = enc_type
     conf['categoriser_conf'] = enc_conf
 
