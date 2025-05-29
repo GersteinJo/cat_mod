@@ -1,4 +1,4 @@
-log: false
+log: true
 project_name: 'chicken'
 run_name: 'test'
 categoriser_conf: 'configs/categorisers/sep/default.yaml'

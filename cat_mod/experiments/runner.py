@@ -34,7 +34,7 @@ class Runner:
             if self.encoder is not None:
                 obs = self.encoder.encode(obs)
 
-            cls, probs = self.categoriser.predict(obs[None])
+            cls = self.categoriser.predict(obs[None])
             is_pecked = cls[0] == 1
 
             if is_pecked:
@@ -56,7 +56,10 @@ class Runner:
                         "total_missed": total_missed,
                         "success_rate": total_correct_pecks / (peck_counter + 1e-24),
                         "total_pecks": peck_counter,
-                        "prediction_entropy": entropy(probs[0])
+                        "prediction_entropy": self.categoriser.prediction_entropy,
+                        "kernel_mean": self.categoriser.kernel_mean,
+                        "kernel_std": self.categoriser.kernel_std,
+                        "kernel_max": self.categoriser.kernel_max
                      },
                     step=i
                 )

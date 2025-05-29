@@ -4,6 +4,8 @@ import types
 
 from cat_mod.models.cat_mod.utils import sample_categorical_variables
 
+from scipy.stats import entropy
+
 
 class SEP:
     def __exponential_kernel__(self, X, s, *args):
@@ -72,6 +74,13 @@ class SEP:
         self.lr = lr
         self.omega = omega
         self.dr = dr
+
+        # metrics
+        self.prediction_entropy = 0
+        self.kernel_mean = 0
+        self.kernel_std = 0
+        self.kernel_max = 0
+
         if X:    
             self.X = X
             self.counter = None
@@ -167,8 +176,14 @@ class SEP:
         # print(self.P.shape, total_K.shape, s.shape)
 
         predictions = sp.special.softmax(np.matmul(total_K,self.P), axis = 1)
+
+        self.prediction_entropy = entropy(predictions.mean(axis=0))
+        self.kernel_max = total_K.max()
+        self.kernel_mean = total_K.mean()
+        self.kernel_std = total_K.std()
+
         return predictions
 
     def predict(self, s, *args):
         predictions = self.predict_proba(s, *args)
-        return sample_categorical_variables(predictions, self._rng), predictions
+        return sample_categorical_variables(predictions, self._rng)
