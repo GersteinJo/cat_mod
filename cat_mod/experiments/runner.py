@@ -1,5 +1,6 @@
 import wandb
 import numpy as np
+from scipy.stats import entropy
 
 
 class Runner:
@@ -33,15 +34,15 @@ class Runner:
             if self.encoder is not None:
                 obs = self.encoder.encode(obs)
 
-            cls = self.categoriser.predict(obs)
+            cls, probs = self.categoriser.predict(obs[None])
             is_pecked = cls[0] == 1
 
             if is_pecked:
                 peck_counter += 1
-                self.categoriser.fit(obs, label)
+                self.categoriser.fit(obs[None], np.array([int(label['edible'])]))
 
-            correct_peck = int(is_pecked and label['edible'])
-            total_correct_pecks += correct_peck
+            reward = int(is_pecked and label['edible'])
+            total_correct_pecks += reward
             missed = int((not is_pecked) and label['edible'])
             total_missed += missed
 
@@ -49,16 +50,18 @@ class Runner:
                 logger.log(
                     {
                         "peck": int(is_pecked),
-                        "correct_peck": correct_peck,
+                        "reward": reward,
                         "missed": missed,
                         "total_correct_pecks": total_correct_pecks,
                         "total_missed": total_missed,
                         "success_rate": total_correct_pecks / (peck_counter + 1e-24),
-                        "total_pecks": peck_counter
+                        "total_pecks": peck_counter,
+                        "prediction_entropy": entropy(probs[0])
                      },
                     step=i
                 )
-                pecked_objects.add_data(label.values())
+                if is_pecked:
+                    pecked_objects.add_data(*list(label.values()))
 
         if logger:
             logger.log({'pecked_objects': pecked_objects})

@@ -4,9 +4,8 @@ run_name: 'test'
 categoriser_conf: 'configs/categorisers/sep/default.yaml'
 encoder_conf: 'configs/encoders/dim/default.yaml'
 
-n_iter: 30
+n_iter: 500
 seed: null
 dataset:
   dir: 'datasets/chicken/food1/test_data/im'
   info: 'datasets/chicken/food1/test_data/image_info.csv'
-  batch_size: 512

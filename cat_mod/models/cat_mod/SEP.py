@@ -2,6 +2,8 @@ import numpy as np
 import scipy as sp
 import types
 
+from cat_mod.models.cat_mod.utils import sample_categorical_variables
+
 
 class SEP:
     def __exponential_kernel__(self, X, s, *args):
@@ -31,7 +33,7 @@ class SEP:
             dr = 0.1,
             kernel=None,
             X=None,
-            logger = None
+            seed=None
     ):
         '''
         Practically, this classdoes the following:
@@ -98,7 +100,8 @@ class SEP:
         
         self.P = np.zeros((hidden_space_shape, output_space_shape ))
 
-        self.logger = logger
+        self.seed = seed
+        self._rng = np.random.default_rng(seed)
 
     def fit(self, s, f=None, kernel=None, *args):
         '''
@@ -141,15 +144,6 @@ class SEP:
             # print(np.argmax(np.matmul(K,self.P)), f[t], end = " \t")
             # print(acc)
             self.P = self.dr * self.P + self.lr*a*(b-self.omega * self.P)
-            
-            
-            if self.logger:
-                self.logger.log(
-                    {"pred_correct": acc},
-                    step = t
-                )
-
-
         return self
 
     def predict_proba(self, s, *args):
@@ -177,4 +171,4 @@ class SEP:
 
     def predict(self, s, *args):
         predictions = self.predict_proba(s, *args)
-        return np.argmax(predictions, axis = 1)
+        return sample_categorical_variables(predictions, self._rng), predictions
