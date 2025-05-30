@@ -74,7 +74,7 @@ class CNN(BaseEncoder):
 class SE(BaseEncoder):
     def __init__(self, pretrained_weights=None, **config):
         encoding_sds = Sds.make(config.pop('encoding_sds'))
-        self.model = SpatialEncoderLayer(feedforward_sds=Sds((32*32*3, 32*32*3)), output_sds=encoding_sds, **config)
+        self.model = SpatialEncoderLayer(feedforward_sds=Sds((32*32*3, 3064)), output_sds=encoding_sds, **config)
         if pretrained_weights:
             weights = np.load(pretrained_weights)
             self.model.weights_backend.weights = weights

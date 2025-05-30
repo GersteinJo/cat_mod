@@ -36,11 +36,12 @@ def train(conf, logger=None):
                 logger.log(
                     {
                         'entropy': encoder.output_entropy(),
-                        'radius': encoder.radius.mean()
+                        'radius': encoder.radius.mean(),
+                        'epoch': epoch
                     }
                 )
-
-    np.save(f'weights/se_cifar.npy', encoder.weights_backend.weights)
+        print(f'sds: {encoder.feedforward_sds}')
+    np.save(f'weights/se_cifar_test.npy', encoder.weights_backend.weights)
 
 
 if __name__ == '__main__':
