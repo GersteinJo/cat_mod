@@ -1,4 +1,6 @@
 from cat_mod.models.representations.DIM import Encoder as DIMEncoder
+from cat_mod.models.representations.ConvVAE import ConvVAE
+from cat_mod.models.representations.CNNEncoder import CNNEncoder
 from cat_mod.models.representations.spatial_pooler.se import SpatialEncoderLayer
 from cat_mod.models.representations.spatial_pooler.sdr import RateSdr
 from cat_mod.models.representations.spatial_pooler.sds import Sds
@@ -29,6 +31,45 @@ class DIM(BaseEncoder):
             obs = self.model(obs[None])[0][0]
         obs = obs.detach().cpu().numpy()
         return obs
+
+
+class VAE(BaseEncoder):
+    def __init__(self, latent_dim, pretrained_weights_path=None, **kwargs):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model = ConvVAE(latent_dim=latent_dim).to(self.device)
+        if pretrained_weights_path:
+            self.model.load_state_dict(
+                torch.load(pretrained_weights_path, map_location=self.device)
+            )
+            print('Pretrained weights loaded.')
+        self.model.eval()
+
+    def encode(self, obs):
+        obs = obs.to(self.device)
+        with torch.no_grad():
+            obs = self.model(obs[None])[0][0]
+        obs = obs.detach().cpu().numpy()
+        return obs
+
+
+class CNN(BaseEncoder):
+    def __init__(self, pretrained_weights_path=None, **kwargs):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model = CNNEncoder().to(self.device)
+        if pretrained_weights_path:
+            self.model.load_state_dict(
+                torch.load(pretrained_weights_path, map_location=self.device)
+            )
+            print('Pretrained weights loaded.')
+        self.model.eval()
+
+    def encode(self, obs):
+        obs = obs.to(self.device)
+        with torch.no_grad():
+            obs = self.model(obs[None])[0][0]
+        obs = obs.detach().cpu().numpy()
+        return obs
+
 
 class SE(BaseEncoder):
     def __init__(self, pretrained_weights=None, **config):

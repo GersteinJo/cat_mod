@@ -1,0 +1,2 @@
+pretrained_weights_path: 'weights/cifar_vae.wgt'
+latent_dim: 64

@@ -2,18 +2,15 @@ import yaml
 import wandb
 import numpy as np
 from torchvision import transforms
-from torch.utils.data import DataLoader
 
 from runner import Runner
 from cat_mod.utils.image_dataset import ImageLabelDataset
-from cat_mod.models.representations.wrappers import DIM, SE
-from cat_mod.models.representations.CNNEncoder import CNNEncoder
-from cat_mod.models.representations.ConvVAE import ConvVAE as VAEncoder
+from cat_mod.models.representations.wrappers import DIM, SE, VAE, CNN
 
 ENCODERS = {
     "dim": DIM,
-    "cnn": CNNEncoder,
-    "vae": VAEncoder,
+    "cnn": CNN,
+    "vae": VAE,
     "se": SE
 }
 

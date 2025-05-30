@@ -1,5 +1,5 @@
 # DIM: 64, SE: 2000
-input_space_shape: 2000
+input_space_shape: 64
 hidden_space_shape: 1000
 output_space_shape: 2
 delta: 1.5
