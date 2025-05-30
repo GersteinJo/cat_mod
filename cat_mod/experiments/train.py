@@ -60,7 +60,6 @@ if __name__ == '__main__':
     if log:
         logger = wandb.init(
             project=conf.pop('project_name'),
-            name=conf.pop('run_name'),
             config=conf
         )
     else:

@@ -1,8 +1,8 @@
-log: false
+log: true
 project_name: train_se
 
 batch_size: 32
-epochs: 1
+epochs: 20
 seed: null
 
 se_config: 'configs/encoders/se/default.yaml'
