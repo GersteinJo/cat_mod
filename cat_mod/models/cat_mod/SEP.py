@@ -33,6 +33,8 @@ class SEP:
             lr = 0.9,
             omega = 1,
             dr = 0.1,
+            softmax_beta=1.0,
+            eps_greedy=0.05,
             kernel=None,
             X=None,
             seed=None
@@ -74,6 +76,8 @@ class SEP:
         self.lr = lr
         self.omega = omega
         self.dr = dr
+        self.softmax_beta = softmax_beta
+        self.eps_greedy = eps_greedy
 
         # metrics
         self.prediction_entropy = 0
@@ -175,7 +179,7 @@ class SEP:
         #                  # to fitting method so it does not last forever
         # print(self.P.shape, total_K.shape, s.shape)
 
-        predictions = sp.special.softmax(np.matmul(total_K,self.P), axis = 1)
+        predictions = sp.special.softmax(self.softmax_beta * np.matmul(total_K,self.P), axis = 1)
 
         self.prediction_entropy = entropy(predictions.mean(axis=0))
         self.kernel_max = total_K.max()
@@ -185,5 +189,14 @@ class SEP:
         return predictions
 
     def predict(self, s, *args):
-        predictions = self.predict_proba(s, *args)
-        return sample_categorical_variables(predictions, self._rng)
+        probs = self.predict_proba(s, *args)
+        if self.eps_greedy >= 0:
+            if self._rng.random() < self.eps_greedy:
+                uniform = np.ones_like(probs)
+                uniform /= uniform.sum(axis=-1)
+                predictions = sample_categorical_variables(uniform, self._rng)
+            else:
+                predictions = np.argmax(probs, axis=-1)
+        else:
+            predictions = sample_categorical_variables(probs, self._rng)
+        return predictions
