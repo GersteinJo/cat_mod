@@ -45,7 +45,7 @@ class SdrDataset:
             bin_sdrs = [np.flatnonzero(img >= threshold) for img in flatten_images]
             flatten_images[flatten_images < threshold] = 0.0
             rate_sdrs = [
-                RateSdr(sdr, values=values[sdr])
+                RateSdr(sdr, values=values[sdr]/(values[sdr].sum()))
                 for sdr, values in zip(bin_sdrs, flatten_images)
             ]
             self.sdrs = SdrArray(sparse=rate_sdrs, dense=flatten_images, sdr_size=sdr_size)

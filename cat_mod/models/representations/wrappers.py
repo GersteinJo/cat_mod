@@ -85,6 +85,6 @@ class SE(BaseEncoder):
         threshold = 1/255.0
         sparse = np.flatnonzero(dense >= threshold)
         dense[dense < threshold] = 0.0
-        rate_sdr = RateSdr(sparse, values=dense[sparse])
+        rate_sdr = RateSdr(sparse, values=dense[sparse]/dense[sparse].sum())
         emb = self.model.compute(rate_sdr)
         return emb.to_dense(self.model.output_sds.size)
